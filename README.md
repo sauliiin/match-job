@@ -13,8 +13,8 @@ O **CarreiraMais** é uma *Single Page Application (SPA)* raiz, construída na b
 O objetivo? Conectar **Profissionais/Estudantes** com **Cursos Fodas** (gratuitos e pagos) e **Vagas de Emprego** que realmente dão match com as habilidades deles. Sem enrolação. 🤝
 
 ### 🌟 Features de Tremer o Teclado
-- **Modo Escuro Cyberpunk Mágico:** Um botão maroto que desliga as luzes da sua tela e acende o neon! (Seu oftalmologista aprova 👓).
-- **Match Automático Tunado:** Agora o sistema não faz mais unidunitê de skill. Ele cruza **habilidades**, **área**, **contexto do perfil**, **nível do curso**, **tipo de vaga** e até a **localização/modalidade** pra montar um ranking mais inteligente.
+- **Modo Escuro Cyberpunk Mágico:** Um botão que desliga as luzes da sua tela e acende o neon **Cyberpunk 2077** 🤘🏻! 
+- **Match Automático Tunado:** O sistema não faz unidunitê de skill. Ele cruza **habilidades**, **área**, **contexto do perfil**, **nível do curso**, **tipo de vaga** e até a **localização/modalidade** pra montar um ranking mais inteligente.
 - **Explicação do Match:** Além de jogar a recomendação na sua cara, o sistema ainda mostra o famoso *"por que diabos isso apareceu pra mim?"* com percentual e justificativa no card.
 - **Sem Recarregar a Página:** Clicou? Abriu! A navegação é por hash `#`, mais lisa que sabonete molhado. 🧼
 - **Stepper de Cadastro:** Uma tela de cadastro para usuários e empresas dividida em passos bonitinhos, pra ninguém ter crise de ansiedade preenchendo 200 campos de uma vez. 💆‍♂️
@@ -24,13 +24,13 @@ O objetivo? Conectar **Profissionais/Estudantes** com **Cursos Fodas** (gratuito
 
 ## 🧠 O Cérebro do Match (Agora Ficou Mais Esperto)
 
-Antes o match era tipo: "área bateu? skill bateu? então vai". Agora ele ficou menos emocionado e mais malandro:
+Emocionado e malandro:
 
 - **Cursos:** o ranking considera habilidades em comum, área de interesse, contexto textual do seu perfil e alinhamento com o seu momento (`Estudante`, `Profissional Formado` ou `Em transição de carreira`).
 - **Vagas:** além de habilidades e área, ele também pesa tipo de vaga (`Estágio`, `CLT`, `PJ`, etc.), modalidade (`Remoto`, `Híbrido`, `Presencial`) e localização.
 - **Match com explicação:** cada card no dashboard mostra um percentual e uma frase do tipo: *"3 habilidades em comum + mesma área + nível alinhado com seu momento."*
 
-Traduzindo: ainda não é o cérebro da Skynet, mas já parou de recomendar qualquer coisa só porque viu uma palavra igual no meio da descrição. 😌
+Traduzindo: não é o cérebro da Skynet, mas não recomenda qualquer coisa só porque viu uma palavra igual no meio da descrição. 😌
 
 ---
 
