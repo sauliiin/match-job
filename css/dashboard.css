@@ -111,6 +111,49 @@
 }
 .filter-select:focus { outline: none; border-color: var(--primary); }
 
+.match-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: .74rem; font-weight: 700;
+  border: 1px solid transparent; margin-bottom: 10px;
+}
+.match-pill.high {
+  background: rgba(252, 238, 10, .12);
+  border-color: rgba(252, 238, 10, .35);
+  color: var(--accent);
+}
+.match-pill.mid {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.match-pill.low {
+  background: rgba(148, 163, 184, .10);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+.match-reason {
+  font-size: .8rem; color: var(--text-muted); line-height: 1.55;
+  margin-bottom: 10px; min-height: 38px;
+}
+.match-meter {
+  height: 6px; border-radius: 999px;
+  background: rgba(148, 163, 184, .14);
+  overflow: hidden; margin-bottom: 14px;
+}
+.match-meter-fill {
+  height: 100%; border-radius: inherit;
+}
+.match-meter-fill.high {
+  background: linear-gradient(90deg, var(--accent), #ffe95b);
+}
+.match-meter-fill.mid {
+  background: linear-gradient(90deg, var(--primary), #38bdf8);
+}
+.match-meter-fill.low {
+  background: linear-gradient(90deg, #64748b, #94a3b8);
+}
+
 /* Course card */
 .course-card { padding: 0; overflow: hidden; }
 .course-card-top {

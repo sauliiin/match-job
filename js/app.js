@@ -5,18 +5,33 @@
 
 // ---- Auth helpers ----
 function getUser() {
-  try { return JSON.parse(localStorage.getItem('cm_user')); }
+  try {
+    return JSON.parse(localStorage.getItem('cm_session'))?.user || null;
+  }
   catch { return null; }
 }
 
-function saveUser(data) {
-  localStorage.setItem('cm_user', JSON.stringify(data));
+function getUserSession() {
+  try {
+    return JSON.parse(localStorage.getItem('cm_session'));
+  }
+  catch {
+    return null;
+  }
 }
 
-function logoutUser() {
-  localStorage.removeItem('cm_user');
-  toast('Até logo! Sessão encerrada.', 'success');
-  window.location.hash = 'home';
+function saveUserSession(userId, user) {
+  localStorage.setItem('cm_session', JSON.stringify({ userId, user }));
+}
+
+async function logoutUser() {
+  try {
+    await signOutUser();
+    toast('Até logo! Sessão encerrada.', 'success');
+    window.location.hash = 'home';
+  } catch (error) {
+    toast(error.message || 'Não foi possível encerrar a sessão.', 'error');
+  }
 }
 
 // ---- Toast ----
@@ -39,7 +54,7 @@ function toast(message, type = 'info') {
 
 // ---- Dark mode ----
 function initDarkMode() {
-  const saved = localStorage.getItem('cm_theme') || 'light';
+  const saved = localStorage.getItem('cm_theme') || 'dark';
   document.documentElement.dataset.theme = saved;
   updateDarkIcon(saved);
 }
@@ -148,6 +163,7 @@ function modalidadeIcon(mod) {
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
   initDarkMode();
   initNavbar();
 });

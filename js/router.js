@@ -14,25 +14,30 @@ const ROUTES = {
   'sobre':     { render: pageSobre,     init: initSobre,     title: 'Sobre' }
 };
 
-function navigate(rawHash) {
+async function navigate(rawHash) {
   const hash = (rawHash || '').replace(/^#/, '').split('?')[0].trim();
   const route = ROUTES[hash] || ROUTES[''];
+  const container = document.getElementById('page-container');
+
+  if (container) {
+    container.innerHTML = '<div style="display:flex;justify-content:center;padding:80px"><div class="spinner" style="width:36px;height:36px;border-width:3px"></div></div>';
+  }
+
+  await waitForAuthReady();
+  const user = getUser();
 
   // Guard: protected routes require login
-  if (route.protected && !getUser()) {
+  if (route.protected && !user) {
     toast('Faça login para acessar o dashboard.', 'error');
     window.location.hash = 'login';
     return;
   }
 
   // Redirect logged-in users away from login/cadastro
-  if ((hash === 'login' || hash === 'cadastro') && getUser()) {
+  if ((hash === 'login' || hash === 'cadastro') && user) {
     window.location.hash = 'dashboard';
     return;
   }
-
-  const container = document.getElementById('page-container');
-  container.innerHTML = '<div style="display:flex;justify-content:center;padding:80px"><div class="spinner" style="width:36px;height:36px;border-width:3px"></div></div>';
 
   // Tiny delay to allow spinner to show, then render
   requestAnimationFrame(() => {

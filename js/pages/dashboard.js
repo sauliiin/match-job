@@ -164,26 +164,58 @@ function toggleEditProfile() {
   document.getElementById('edit-btn-text').textContent = editMode ? 'Cancelar' : 'Editar Perfil';
 }
 
-function saveProfileEdit() {
-  const user = getUser();
+async function saveProfileEdit() {
+  const session = getUserSession();
+  const user = session?.user;
+  if (!session?.userId || !user) {
+    toast('Sua sessão expirou. Faça login novamente.', 'error');
+    window.location.hash = 'login';
+    return;
+  }
+
   const fields = { nome:'edit-nome', email:'edit-email', cidade:'edit-cidade', estado:'edit-estado' };
+  const updates = {};
+
   Object.entries(fields).forEach(([key, id]) => {
     const el = document.getElementById(id);
-    if (el) user[key] = el.value;
+    if (el) updates[key] = el.value.trim();
   });
-  saveUser(user);
-  toast('Perfil atualizado!', 'success');
-  refreshNavbar();
-  navigate('dashboard');
+
+  try {
+    const updatedUser = await updateUserInFirebase(session.userId, {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    });
+    saveUserSession(session.userId, updatedUser);
+    toast('Perfil atualizado!', 'success');
+    refreshNavbar();
+    navigate('dashboard');
+  } catch (error) {
+    toast(error.message || 'Não foi possível atualizar seu perfil.', 'error');
+  }
 }
 
-function removeSkillFromProfile(skill) {
-  const user = getUser();
-  user.skills = (user.skills || []).filter(s => s !== skill);
-  saveUser(user);
+async function removeSkillFromProfile(skill) {
+  const session = getUserSession();
+  const user = session?.user;
+  if (!session?.userId || !user) return;
+
+  const nextSkills = (user.skills || []).filter(s => s !== skill);
+
+  try {
+    const updatedUser = await updateUserInFirebase(session.userId, {
+      skills: nextSkills,
+      updatedAt: new Date().toISOString()
+    });
+    saveUserSession(session.userId, updatedUser);
+  } catch (error) {
+    toast(error.message || 'Não foi possível remover a habilidade.', 'error');
+    return;
+  }
+
   const container = document.getElementById('profile-skills');
   if (container) {
-    const updatedSkills = user.skills;
+    const updatedSkills = nextSkills;
     const skillsHtml = updatedSkills.length
       ? updatedSkills.map(s => `<span class="tag removable" style="cursor:default">${s}<button class="remove-btn" onclick="removeSkillFromProfile('${s.replace(/'/g,"\\'")}')"><i class="fa-solid fa-xmark"></i></button></span>`).join('')
       : '<span style="color:var(--text-muted);font-size:.875rem">Nenhuma habilidade adicionada.</span>';
@@ -234,39 +266,263 @@ function addModalCustomSkill() {
   if (val && !_modalSkills.includes(val)) { _modalSkills.push(val); toast(`"${val}" adicionada!`,'success'); }
   if (document.getElementById('modal-skill-input')) document.getElementById('modal-skill-input').value = '';
 }
-function saveModalSkills() {
+async function saveModalSkills() {
   if (!_modalSkills) { closeModal(); return; }
-  const user = getUser();
-  user.skills = _modalSkills;
-  saveUser(user);
-  _modalSkills = null;
-  closeModal();
-  toast('Habilidades salvas!', 'success');
-  navigate('dashboard');
+  const session = getUserSession();
+  if (!session?.userId) {
+    closeModal();
+    toast('Sua sessão expirou. Faça login novamente.', 'error');
+    window.location.hash = 'login';
+    return;
+  }
+
+  try {
+    const updatedUser = await updateUserInFirebase(session.userId, {
+      skills: _modalSkills,
+      updatedAt: new Date().toISOString()
+    });
+    saveUserSession(session.userId, updatedUser);
+    _modalSkills = null;
+    closeModal();
+    toast('Habilidades salvas!', 'success');
+    navigate('dashboard');
+  } catch (error) {
+    toast(error.message || 'Não foi possível salvar as habilidades.', 'error');
+  }
+}
+
+const MATCH_STOPWORDS = new Set([
+  'com','para','das','dos','uma','uns','umas','que','seu','sua','seus','suas',
+  'por','mais','menos','entre','sobre','como','onde','muito','muita','curso',
+  'cursos','vaga','vagas','perfil','area','areas','profissional','profissionais',
+  'trabalho','mercado','ideal','ideais','seu','sua','sera','sao','nosso','nossa'
+]);
+
+const COURSE_LEVEL_FIT = {
+  estudante: { iniciante: 1, intermediario: 0.78, avancado: 0.28 },
+  'profissional formado': { iniciante: 0.42, intermediario: 1, avancado: 0.88 },
+  'em transicao de carreira': { iniciante: 1, intermediario: 0.84, avancado: 0.34 }
+};
+
+const JOB_TYPE_FIT = {
+  estudante: { estagio: 1, trainee: 0.84, clt: 0.36, pj: 0.2, freelance: 0.52 },
+  'profissional formado': { estagio: 0.08, trainee: 0.36, clt: 1, pj: 0.9, freelance: 0.72 },
+  'em transicao de carreira': { estagio: 0.44, trainee: 0.92, clt: 0.82, pj: 0.52, freelance: 0.56 }
+};
+
+function normalizeText(value = '') {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function canonicalValue(value = '') {
+  return normalizeText(value).replace(/\s+/g, ' ');
+}
+
+function tokenizeText(value = '') {
+  return [...new Set(
+    normalizeText(value)
+      .replace(/[^a-z0-9+#]+/g, ' ')
+      .split(/\s+/)
+      .filter(token => token.length >= 3 && !MATCH_STOPWORDS.has(token))
+  )];
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function buildUserMatchContext(user) {
+  return {
+    areaKey: canonicalValue(user.area),
+    cityKey: canonicalValue(user.cidade),
+    stateKey: canonicalValue(user.estado),
+    profileKey: canonicalValue(user.perfil),
+    skillSet: new Set((user.skills || []).map(canonicalValue).filter(Boolean)),
+    tokens: new Set(tokenizeText([
+      user.area,
+      user.curso,
+      user.perfil,
+      user.escolaridade,
+      user.instituicao,
+      user.cidade,
+      ...(user.skills || [])
+    ].join(' ')))
+  };
+}
+
+function computeTokenOverlap(userTokens, itemTokens) {
+  if (!userTokens.size || !itemTokens.size) return 0;
+  let overlap = 0;
+  itemTokens.forEach(token => {
+    if (userTokens.has(token)) overlap += 1;
+  });
+  return clamp(overlap / Math.max(1, Math.min(userTokens.size, itemTokens.size, 6)), 0, 1);
+}
+
+function computeSkillMatch(userContext, skills = []) {
+  const normalizedSkills = skills.map(canonicalValue).filter(Boolean);
+  const matchedSkills = normalizedSkills.filter(skill => userContext.skillSet.has(skill));
+  return {
+    ratio: normalizedSkills.length ? matchedSkills.length / normalizedSkills.length : 0,
+    count: matchedSkills.length,
+    matchedSkills
+  };
+}
+
+function getCourseLevelFit(profileKey, nivel) {
+  return COURSE_LEVEL_FIT[profileKey]?.[canonicalValue(nivel)] ?? 0.55;
+}
+
+function normalizeJobType(tipo = '') {
+  const normalized = canonicalValue(tipo);
+  if (normalized.startsWith('clt')) return 'clt';
+  if (normalized.startsWith('estagio')) return 'estagio';
+  if (normalized.startsWith('trainee')) return 'trainee';
+  if (normalized.startsWith('pj')) return 'pj';
+  if (normalized.startsWith('freelance')) return 'freelance';
+  return normalized;
+}
+
+function getJobTypeFit(profileKey, tipo) {
+  return JOB_TYPE_FIT[profileKey]?.[normalizeJobType(tipo)] ?? 0.55;
+}
+
+function extractStateFromLocation(location = '') {
+  const match = String(location).match(/-\s*([A-Z]{2})$/);
+  return canonicalValue(match?.[1] || '');
+}
+
+function getJobLocationFit(userContext, job) {
+  const cidade = canonicalValue(job.cidade);
+  const state = extractStateFromLocation(job.cidade);
+  const modalidade = canonicalValue(job.modalidade);
+
+  if (!userContext.cityKey && !userContext.stateKey) {
+    if (modalidade === 'remoto') return 1;
+    if (modalidade === 'hibrido') return 0.72;
+    return 0.5;
+  }
+
+  if (modalidade === 'remoto') return 1;
+  if (userContext.cityKey && cidade.includes(userContext.cityKey)) return 1;
+  if (userContext.stateKey && state && state === userContext.stateKey) {
+    return modalidade === 'hibrido' ? 0.86 : 0.72;
+  }
+  if (modalidade === 'hibrido') return 0.34;
+  return 0.12;
+}
+
+function capitalize(text = '') {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+}
+
+function formatMatchExplanation(reasons, fallback) {
+  const pickedReasons = reasons.filter(Boolean).slice(0, 3);
+  if (!pickedReasons.length) return fallback;
+  return `${capitalize(pickedReasons.join(' + '))}.`;
+}
+
+function getMatchTone(score) {
+  if (score >= 80) return 'high';
+  if (score >= 60) return 'mid';
+  return 'low';
+}
+
+function buildCourseMatch(course, userContext) {
+  const skillMatch = computeSkillMatch(userContext, course.skills);
+  const areaFit = userContext.areaKey ? (canonicalValue(course.area) === userContext.areaKey ? 1 : 0) : 0.45;
+  const contextFit = computeTokenOverlap(
+    userContext.tokens,
+    new Set(tokenizeText([
+      course.nome,
+      course.plataforma,
+      course.area,
+      course.descricao,
+      ...(course.skills || [])
+    ].join(' ')))
+  );
+  const levelFit = getCourseLevelFit(userContext.profileKey, course.nivel);
+  const score = Math.round((skillMatch.ratio * 45) + (areaFit * 20) + (contextFit * 20) + (levelFit * 15));
+
+  const reasons = [];
+  if (areaFit === 1) reasons.push('mesma area de interesse');
+  if (skillMatch.count > 0) reasons.push(`${skillMatch.count} habilidade${skillMatch.count > 1 ? 's' : ''} em comum`);
+  if (levelFit >= 0.8) reasons.push('nivel alinhado com seu momento');
+  if (contextFit >= 0.34) reasons.push('descricao conversa com seu perfil');
+  if (!reasons.length && course.gratis) reasons.push('porta de entrada leve para explorar essa trilha');
+
+  return {
+    item: course,
+    score: clamp(score, 0, 100),
+    tone: getMatchTone(score),
+    explanation: formatMatchExplanation(reasons, 'Sugestao ampla para expandir seu radar de aprendizado.'),
+    reasons,
+    matchingSkills: skillMatch.count
+  };
+}
+
+function buildJobMatch(job, userContext) {
+  const skillMatch = computeSkillMatch(userContext, job.skills);
+  const areaFit = userContext.areaKey ? (canonicalValue(job.area) === userContext.areaKey ? 1 : 0) : 0.45;
+  const contextFit = computeTokenOverlap(
+    userContext.tokens,
+    new Set(tokenizeText([
+      job.cargo,
+      job.empresa,
+      job.area,
+      job.descricao,
+      ...(job.skills || []),
+      ...((job.requisitos || []))
+    ].join(' ')))
+  );
+  const locationFit = getJobLocationFit(userContext, job);
+  const typeFit = getJobTypeFit(userContext.profileKey, job.tipo);
+  const score = Math.round((skillMatch.ratio * 40) + (areaFit * 20) + (contextFit * 15) + (locationFit * 15) + (typeFit * 10));
+
+  const reasons = [];
+  if (skillMatch.count > 0) reasons.push(`${skillMatch.count} habilidade${skillMatch.count > 1 ? 's' : ''} em comum`);
+  if (areaFit === 1) reasons.push('mesma area de interesse');
+  if (locationFit >= 0.8) reasons.push(job.modalidade === 'Remoto' ? 'vaga remota encaixa no seu contexto' : 'localizacao bem alinhada');
+  if (typeFit >= 0.8) reasons.push(`tipo de vaga combina com seu momento (${job.tipo})`);
+  if (contextFit >= 0.34) reasons.push('descricao e requisitos conversam com seu perfil');
+
+  return {
+    item: job,
+    score: clamp(score, 0, 100),
+    tone: getMatchTone(score),
+    explanation: formatMatchExplanation(reasons, 'Opcao interessante para ampliar seu radar profissional.'),
+    reasons,
+    matchingSkills: skillMatch.count
+  };
+}
+
+function getRankedCourseMatches(user, courses = CURSOS) {
+  const userContext = buildUserMatchContext(user);
+  return courses
+    .map(course => buildCourseMatch(course, userContext))
+    .sort((a, b) => b.score - a.score || a.item.nome.localeCompare(b.item.nome, 'pt-BR'));
+}
+
+function getRankedJobMatches(user, jobs = VAGAS) {
+  const userContext = buildUserMatchContext(user);
+  return jobs
+    .map(job => buildJobMatch(job, userContext))
+    .sort((a, b) => b.score - a.score || a.item.cargo.localeCompare(b.item.cargo, 'pt-BR'));
 }
 
 // ---- Courses Rec Tab ----
 function renderCoursesRec(user) {
-  const userSkills = user.skills || [];
-  const userArea   = user.area || '';
-
-  let recommended = CURSOS.filter(c =>
-    c.area === userArea || c.skills.some(s => userSkills.includes(s))
-  );
-  // Score by matches
-  recommended = recommended.sort((a, b) => {
-    const scoreA = a.skills.filter(s => userSkills.includes(s)).length + (a.area === userArea ? 2 : 0);
-    const scoreB = b.skills.filter(s => userSkills.includes(s)).length + (b.area === userArea ? 2 : 0);
-    return scoreB - scoreA;
-  });
-  if (!recommended.length) recommended = CURSOS.slice(0,6);
-
-  const cards = recommended.map(c => renderCourseCard(c)).join('');
+  const recommended = getRankedCourseMatches(user).slice(0, 6);
+  const cards = recommended.map(renderCourseCard).join('');
 
   return `
   <div style="margin-bottom:24px">
     <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:6px">Recomendações de Cursos</h1>
-    <p style="color:var(--text-muted);font-size:.9rem">Cursos selecionados com base nas suas habilidades e área de interesse.</p>
+    <p style="color:var(--text-muted);font-size:.9rem">Cursos ranqueados por um match inteligente que cruza habilidades, area, nivel e contexto do seu perfil.</p>
   </div>
 
   <div class="rec-filters">
@@ -289,14 +545,20 @@ function renderCoursesRec(user) {
   `;
 }
 
-function renderCourseCard(c) {
+function renderCourseCard(match) {
+  const c = match.item;
   const skillsHtml = c.skills.map(s => `<span class="tag" style="cursor:default;font-size:.72rem;padding:2px 8px">${s}</span>`).join('');
   return `
   <div class="card course-card">
     <div class="course-card-top"></div>
     <div class="course-card-body">
+      <div class="match-pill ${match.tone}">
+        <i class="fa-solid fa-sparkles"></i> ${match.score}% de match
+      </div>
       <div class="course-platform">${c.plataforma}</div>
       <div class="course-title">${c.nome}</div>
+      <p class="match-reason">${match.explanation}</p>
+      <div class="match-meter"><div class="match-meter-fill ${match.tone}" style="width:${match.score}%"></div></div>
       <div class="course-meta">
         <span><i class="fa-regular fa-clock"></i> ${c.duracao}</span>
         <span class="badge ${nivelBadge(c.nivel)}">${c.nivel}</span>
@@ -315,23 +577,14 @@ function filterRecCursos() {
   const nivel = document.getElementById('rec-filter-nivel')?.value || '';
   const preco = document.getElementById('rec-filter-preco')?.value || '';
   const user  = getUser();
-  const userSkills = user?.skills || [];
-  const userArea   = user?.area   || '';
 
-  let result = CURSOS.filter(c => {
+  const filtered = CURSOS.filter(c => {
     const matchArea  = !area  || c.area  === area;
     const matchNivel = !nivel || c.nivel === nivel;
     const matchPreco = !preco || (preco === 'free' ? c.gratis : !c.gratis);
     return matchArea && matchNivel && matchPreco;
   });
-
-  if (!area) {
-    result = result.sort((a,b) => {
-      const sa = a.skills.filter(s=>userSkills.includes(s)).length + (a.area===userArea?2:0);
-      const sb = b.skills.filter(s=>userSkills.includes(s)).length + (b.area===userArea?2:0);
-      return sb - sa;
-    });
-  }
+  const result = getRankedCourseMatches(user, filtered);
 
   const grid = document.getElementById('rec-cursos-grid');
   if (grid) grid.innerHTML = result.length
@@ -341,34 +594,31 @@ function filterRecCursos() {
 
 // ---- Jobs Rec Tab ----
 function renderJobsRec(user) {
-  const userArea   = user.area || '';
-  const userSkills = user.skills || [];
-
-  let jobs = VAGAS.filter(v => v.area === userArea || v.skills.some(s => userSkills.includes(s)));
-  jobs = jobs.sort((a,b) => {
-    const sa = a.skills.filter(s=>userSkills.includes(s)).length + (a.area===userArea?2:0);
-    const sb = b.skills.filter(s=>userSkills.includes(s)).length + (b.area===userArea?2:0);
-    return sb - sa;
-  });
-  if (!jobs.length) jobs = VAGAS.slice(0,6);
+  const jobs = getRankedJobMatches(user).slice(0, 6);
 
   return `
   <div style="margin-bottom:24px">
     <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:6px">Vagas para Mim</h1>
-    <p style="color:var(--text-muted);font-size:.9rem">Vagas compatíveis com seu perfil e área de interesse.</p>
+    <p style="color:var(--text-muted);font-size:.9rem">Vagas ranqueadas por skills, area, contexto da descricao, tipo de vaga e localizacao.</p>
   </div>
   <div class="grid-cards">${jobs.map(renderJobCard).join('')}</div>
   `;
 }
 
-function renderJobCard(v) {
+function renderJobCard(match) {
+  const v = match.item;
   const skillsHtml = v.skills.map(s => `<span class="tag" style="cursor:default;font-size:.72rem;padding:2px 8px">${s}</span>`).join('');
   return `
   <div class="card job-card">
     <div class="job-card-body">
+      <div class="match-pill ${match.tone}">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> ${match.score}% de match
+      </div>
       <span class="badge ${tipoBadge(v.tipo)} job-type-badge">${v.tipo}</span>
       <div class="job-title">${v.cargo}</div>
       <div class="job-company"><i class="fa-solid fa-building"></i> ${v.empresa}</div>
+      <p class="match-reason">${match.explanation}</p>
+      <div class="match-meter"><div class="match-meter-fill ${match.tone}" style="width:${match.score}%"></div></div>
       <div class="job-meta">
         <div class="job-meta-item"><i class="fa-solid fa-location-dot"></i> ${v.cidade}</div>
         <div class="job-meta-item"><i class="fa-solid ${modalidadeIcon(v.modalidade)}"></i> ${v.modalidade}</div>
@@ -418,18 +668,20 @@ function renderSearchTab() {
 }
 
 function filterSearch() {
+  const user  = getUser();
   const kw    = (document.getElementById('search-keyword')?.value || '').toLowerCase();
   const area  =  document.getElementById('search-area')?.value   || '';
   const tipo  =  document.getElementById('search-tipo')?.value   || '';
   const modal =  document.getElementById('search-modal')?.value  || '';
 
-  const result = VAGAS.filter(v => {
+  const filtered = VAGAS.filter(v => {
     const matchKw    = !kw  || v.cargo.toLowerCase().includes(kw) || v.empresa.toLowerCase().includes(kw) || v.skills.some(s=>s.toLowerCase().includes(kw));
     const matchArea  = !area  || v.area  === area;
     const matchTipo  = !tipo  || v.tipo  === tipo;
     const matchModal = !modal || v.modalidade === modal;
     return matchKw && matchArea && matchTipo && matchModal;
   });
+  const result = getRankedJobMatches(user, filtered);
 
   const grid  = document.getElementById('search-grid');
   const count = document.getElementById('search-count');

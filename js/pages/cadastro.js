@@ -309,7 +309,13 @@ function updateSelectedPreview() {
 }
 
 // ---- Finalizar ----
-function finalizarCadastro() {
+async function finalizarCadastro() {
+  const submitBtn = document.querySelector('#wizard-step-3 .btn-secondary');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="spinner"></div> Criando perfil...';
+  }
+
   const userData = {
     nome:        document.getElementById('reg-nome').value.trim(),
     email:       document.getElementById('reg-email').value.trim(),
@@ -326,8 +332,18 @@ function finalizarCadastro() {
     createdAt:   new Date().toISOString()
   };
 
-  saveUser(userData);
-  refreshNavbar();
+  try {
+    const createdUser = await createUserInFirebase(userData);
+    saveUserSession(createdUser.userId, createdUser.user);
+    refreshNavbar();
+  } catch (error) {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> Criar meu Perfil';
+    }
+    toast(error.message || 'Não foi possível concluir o cadastro.', 'error');
+    return;
+  }
 
   // Hide all steps, show success
   document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
@@ -335,9 +351,9 @@ function finalizarCadastro() {
   const success = document.getElementById('cadastro-success');
   success.classList.add('show');
 
-  document.getElementById('go-dashboard-btn').addEventListener('click', () => {
+  document.getElementById('go-dashboard-btn').onclick = () => {
     window.location.hash = 'dashboard';
-  });
+  };
 }
 
 // Enter key on custom skill

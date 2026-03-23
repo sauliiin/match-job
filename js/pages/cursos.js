@@ -11,7 +11,7 @@ function pageCursos() {
   <div class="page-hero">
     <div class="container">
       <h1><i class="fa-solid fa-graduation-cap"></i> Catálogo de Cursos</h1>
-      <p>Explore mais de 25 cursos de plataformas reconhecidas, gratuitos e pagos, para diversas áreas.</p>
+      <p>Explore ${CURSOS.length} cursos de plataformas reconhecidas, gratuitos e pagos, para diversas áreas e trilhas profissionais.</p>
     </div>
   </div>
 

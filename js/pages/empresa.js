@@ -226,27 +226,43 @@ function toggleEmpresaSkill(el, skill) {
   else             { empresaSkills.splice(idx,1); el.classList.remove('selected'); }
 }
 
-function finalizarEmpresa() {
+async function finalizarEmpresa() {
+  const submitBtn = document.querySelector('#emp-step-2 .btn-secondary');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="spinner"></div> Cadastrando empresa...';
+  }
+
   const tiposChecked = [...document.querySelectorAll('input[name="tipo-vaga"]:checked')].map(el=>el.value);
 
   const data = {
-    razao:     document.getElementById('emp-razao')?.value,
-    fantasia:  document.getElementById('emp-fantasia')?.value,
-    cnpj:      document.getElementById('emp-cnpj')?.value,
+    razao:     document.getElementById('emp-razao')?.value.trim(),
+    fantasia:  document.getElementById('emp-fantasia')?.value.trim(),
+    cnpj:      document.getElementById('emp-cnpj')?.value.trim(),
     porte:     document.getElementById('emp-porte')?.value,
     setor:     document.getElementById('emp-setor')?.value,
-    site:      document.getElementById('emp-site')?.value,
-    email:     document.getElementById('emp-email')?.value,
-    tel:       document.getElementById('emp-tel')?.value,
-    cidade:    document.getElementById('emp-cidade')?.value,
+    site:      document.getElementById('emp-site')?.value.trim(),
+    email:     document.getElementById('emp-email')?.value.trim(),
+    tel:       document.getElementById('emp-tel')?.value.trim(),
+    cidade:    document.getElementById('emp-cidade')?.value.trim(),
     estado:    document.getElementById('emp-estado')?.value,
     areas:     document.getElementById('emp-areas')?.value,
     tipos:     tiposChecked,
-    skills:    empresaSkills,
-    cultura:   document.getElementById('emp-cultura')?.value
+    skills:    [...empresaSkills],
+    cultura:   document.getElementById('emp-cultura')?.value.trim(),
+    createdAt: new Date().toISOString()
   };
 
-  localStorage.setItem('cm_empresa', JSON.stringify(data));
+  try {
+    await createCompanyInFirebase(data);
+  } catch (error) {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-building"></i> Cadastrar Empresa';
+    }
+    toast(error.message || 'Não foi possível cadastrar a empresa.', 'error');
+    return;
+  }
 
   document.querySelectorAll('.wizard-step').forEach(s=>s.classList.remove('active'));
   document.getElementById('emp-stepper').style.opacity = '.4';

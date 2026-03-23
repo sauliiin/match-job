@@ -59,7 +59,7 @@ function initLogin() {
   });
 }
 
-function submitLogin(e) {
+async function submitLogin(e) {
   e.preventDefault();
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
@@ -80,11 +80,12 @@ function submitLogin(e) {
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div> Entrando...';
 
-  setTimeout(() => {
-    const user = getUser();
+  try {
+    const result = await authenticateUserInFirebase(email, password);
 
-    if (user && user.email === email && user.senha === password) {
-      toast(`Bem-vindo, ${user.nome?.split(' ')[0]}! 👋`, 'success');
+    if (result) {
+      saveUserSession(result.userId, result.user);
+      toast(`Bem-vindo, ${result.user.nome?.split(' ')[0]}! 👋`, 'success');
       refreshNavbar();
       window.location.hash = 'dashboard';
     } else {
@@ -92,7 +93,11 @@ function submitLogin(e) {
       btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar';
       alertEl.innerHTML = `<div class="alert alert-error"><i class="fa-solid fa-circle-xmark"></i> E-mail ou senha incorretos. Verifique seus dados ou <a href="#cadastro">crie uma conta</a>.</div>`;
     }
-  }, 800);
+  } catch (error) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar';
+    alertEl.innerHTML = `<div class="alert alert-error"><i class="fa-solid fa-circle-xmark"></i> ${error.message || 'Não foi possível acessar sua conta agora.'}</div>`;
+  }
 }
 
 function validateField(input, isValid, errorId) {

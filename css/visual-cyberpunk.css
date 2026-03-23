@@ -272,3 +272,25 @@ html[data-theme="dark"] .jobs-cta-banner .btn-outline:hover {
   color: #000 !important;
   box-shadow: 0 0 25px rgba(252, 238, 10, 0.6), inset 0 0 15px rgba(252, 238, 10, 0.4) !important;
 }
+
+/* Skills Selection Highlight */
+.skills-wrapper .tag.selected,
+.selected-preview .tag.selected,
+.modal-body .tag.selected {
+  background: rgba(252, 238, 10, 0.14) !important;
+  border: 1px solid rgba(252, 238, 10, 0.5) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 14px rgba(252, 238, 10, 0.18), inset 0 0 10px rgba(252, 238, 10, 0.08) !important;
+}
+
+.skills-wrapper .tag.selected:hover,
+.selected-preview .tag.selected:hover,
+.modal-body .tag.selected:hover,
+html[data-theme="dark"] .skills-wrapper .tag.selected,
+html[data-theme="dark"] .selected-preview .tag.selected,
+html[data-theme="dark"] .modal-body .tag.selected {
+  background: rgba(252, 238, 10, 0.18) !important;
+  border-color: rgba(252, 238, 10, 0.72) !important;
+  color: #fcee0a !important;
+  box-shadow: 0 0 22px rgba(252, 238, 10, 0.28), inset 0 0 12px rgba(252, 238, 10, 0.12) !important;
+}

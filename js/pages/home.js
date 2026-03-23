@@ -32,7 +32,7 @@ function pageHome() {
           <div class="label">Usuários ativos</div>
         </div>
         <div class="hero-stat-item">
-          <div class="number" data-counter="17" data-suffix="">0</div>
+          <div class="number" data-counter="${AREAS.length}" data-suffix="">0</div>
           <div class="label">Áreas de atuação</div>
         </div>
       </div>
@@ -75,8 +75,8 @@ function pageHome() {
       <div class="stats-grid">
         <div class="stat-item">
           <i class="fa-solid fa-book-open"></i>
-          <div class="stat-number" data-counter="25" data-suffix="">0</div>
-          <div class="stat-label">Plataformas de cursos integradas</div>
+          <div class="stat-number" data-counter="${CURSOS.length}" data-suffix="">0</div>
+          <div class="stat-label">Cursos no catálogo</div>
         </div>
         <div class="stat-item">
           <i class="fa-solid fa-graduation-cap"></i>
@@ -85,8 +85,8 @@ function pageHome() {
         </div>
         <div class="stat-item">
           <i class="fa-solid fa-briefcase"></i>
-          <div class="stat-number" data-counter="180" data-suffix="+">0</div>
-          <div class="stat-label">Vagas publicadas este mês</div>
+          <div class="stat-number" data-counter="${VAGAS.length}" data-suffix="+">0</div>
+          <div class="stat-label">Vagas no radar agora</div>
         </div>
         <div class="stat-item">
           <i class="fa-solid fa-heart"></i>
