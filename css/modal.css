@@ -1,0 +1,82 @@
+/* ===========================
+   CarreiraMais — Modal System
+   =========================== */
+
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(15, 23, 42, .6);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: backdropIn .2s ease;
+}
+@keyframes backdropIn { from { opacity: 0; } }
+
+.modal-box {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: 0 25px 50px rgba(0,0,0,.25);
+  width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+  animation: modalIn .25s ease;
+}
+.modal-box.modal-lg { max-width: 700px; }
+@keyframes modalIn { from { transform: translateY(-20px) scale(.96); opacity: 0; } }
+
+.modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 24px 24px 0;
+}
+.modal-title   { font-size: 1.2rem; font-weight: 700; line-height: 1.3; }
+.modal-close   {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; transition: all var(--transition);
+}
+.modal-close:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+.modal-body    { padding: 20px 24px; }
+.modal-footer  { padding: 16px 24px 24px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--border); flex-wrap: wrap; }
+
+/* Course modal */
+.modal-platform { font-size: .78rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+.modal-meta     { display: flex; gap: 14px; flex-wrap: wrap; margin: 16px 0; }
+.modal-meta-item{ display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--text-muted); }
+.modal-meta-item i { color: var(--primary); }
+.modal-desc     { color: var(--text-muted); font-size: .9rem; line-height: 1.7; margin-bottom: 16px; }
+.modal-skills-label { font-size: .78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+.modal-skills   { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Job modal */
+.modal-job-company { font-size: .95rem; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+.modal-section      { margin-bottom: 20px; }
+.modal-section-title{ font-size: .78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+.modal-list         { display: flex; flex-direction: column; gap: 6px; padding-left: 4px; }
+.modal-list li      { font-size: .875rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; }
+.modal-list li::before { content: '✓'; color: var(--secondary); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.modal-list.benefits li::before { content: '★'; color: var(--accent); }
+
+/* Confirm modal */
+.confirm-icon  {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: #d1fae5; color: var(--secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; margin: 0 auto 20px;
+}
+.confirm-text  { text-align: center; }
+.confirm-text h3{ margin-bottom: 8px; }
+.confirm-text p { color: var(--text-muted); font-size: .9rem; }
+
+/* Scrollbar inside modal */
+.modal-box::-webkit-scrollbar       { width: 6px; }
+.modal-box::-webkit-scrollbar-track { background: transparent; }
+.modal-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 600px) {
+  .modal-box      { border-radius: var(--radius); }
+  .modal-footer   { flex-direction: column; }
+  .modal-footer .btn { width: 100%; justify-content: center; }
+}
