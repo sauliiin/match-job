@@ -1,4 +1,4 @@
-# 🚀 CarreiraMais — O Tinder Profissional (Só que Melhor e Sem Vácuo) https://match-job-tau.vercel.app/
+# 🚀 CarreiraMais — O Tinder Profissional (Só que Melhor e Sem Vácuo) https://match-job-tau.vercel.app/ 🔥🔥🔥🔥🔥
  
 Bem-vindo ao repositório do **CarreiraMais**! Se você cansou de sites de emprego que parecem planilhas do Excel de 2004 e de plataformas acadêmicas mais caóticas que o trânsito às 18h, você está no lugar certo! 🎯
 
