@@ -1,8 +1,8 @@
 # 🚀 CarreiraMais — O Tinder Profissional (Só que Melhor e Sem Vácuo) https://match-job-tau.vercel.app/ 🔥🔥🔥🔥🔥
  
-Bem-vindo ao repositório do **CarreiraMais**! Se você cansou de sites de emprego que parecem planilhas do Excel de 2004 e de plataformas acadêmicas mais caóticas que o trânsito às 18h, você está no lugar certo! 🎯
+Bem-vindo ao repositório do **CarreiraMais**! Se você cansou de sites de emprego que parecem planilhas do Excel de 2004 e de plataformas acadêmicas caóticash, você está no lugar certo! 🎯
 
-Prepare-se para uma experiência com a estética de quem vive em **2077**, cheia de neon, sombras duplas e bordas afiadas. Aqui não tem espaço pro tédio. 🕶️✨
+Prepare-se para uma experiência com a estética de quem vive em **2077** 🤘🏻, cheia de neon, sombras duplas e bordas afiadas. 🕶️✨
 
 ---
 
@@ -10,10 +10,10 @@ Prepare-se para uma experiência com a estética de quem vive em **2077**, cheia
 
 O **CarreiraMais** é uma *Single Page Application (SPA)* raiz, construída na base da garra, do café e do "puro suco" do HTML/CSS/Vanilla JS (nada de frameworks pesando 300MB no seu `node_modules`).
 
-O objetivo? Conectar **Profissionais/Estudantes** com **Cursos Incríveis** (gratuitos e pagos) e **Vagas de Emprego** que realmente dão match com as habilidades deles. Sem enrolação. 🤝
+O objetivo? Conectar **Profissionais/Estudantes** com **Cursos Fodas** (gratuitos e pagos) e **Vagas de Emprego** que realmente dão match com as habilidades deles. Sem enrolação. 🤝
 
 ### 🌟 Features de Tremer o Teclado
-- **Modo Escuro Cyberpunk Mágico:** Um botão maroto que desliga as luzes da sua tela e acende o neon! (Seu oftalmologista aprova 👓).
+- **Modo Escuro Cyberpunk Mágico:** Um botão que desliga as luzes da sua tela e acende o neon! (Cyberpunk **2077** 🔥🤘🏻).
 - **Match Automático:** O sistema olha pro que você sabe fazer e fala *"Toma aqui esse curso da Fundação Bradesco que é a sua cara"*.
 - **Sem Recarregar a Página:** Clicou? Abriu! A navegação é por hash `#`, mais lisa que sabonete molhado. 🧼
 - **Stepper de Cadastro:** Uma tela de cadastro para usuários e empresas dividida em passos bonitinhos, pra ninguém ter crise de ansiedade preenchendo 200 campos de uma vez. 💆‍♂️
