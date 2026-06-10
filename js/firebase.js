@@ -95,10 +95,20 @@ function normalizeAuthError(error, fallbackMessage) {
     'auth/too-many-requests': 'Muitas tentativas. Tente novamente em alguns minutos.',
     'auth/requires-recent-login': 'Por segurança, faça login novamente antes de alterar este dado.',
     'auth/user-disabled': 'Esta conta foi desativada.',
-    'auth/operation-not-allowed': 'Login por e-mail/senha não está habilitado no Firebase Auth.'
+    'auth/operation-not-allowed': 'Login por e-mail/senha não está habilitado no Firebase Auth.',
+    'auth/configuration-not-found': 'O login por e-mail/senha não está configurado no Firebase Auth.',
+    'PERMISSION_DENIED': 'Sem permissão para gravar no banco de dados. Verifique as regras do Realtime Database.'
   };
 
-  return messages[code] || fallbackMessage || 'Ocorreu um erro ao acessar o Firebase.';
+  // Sempre logue o erro bruto para diagnóstico — nada deve ser silenciado.
+  console.error('[Firebase] erro:', { code, message: error?.message, error });
+
+  if (messages[code]) return messages[code];
+
+  // Erro desconhecido: anexe o detalhe técnico ao fallback para não esconder a causa.
+  const detail = code || error?.message;
+  const base = fallbackMessage || 'Ocorreu um erro ao acessar o Firebase.';
+  return detail ? `${base} (${detail})` : base;
 }
 
 function buildUserProfile(authUser, userData = {}) {
