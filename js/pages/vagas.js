@@ -2,9 +2,61 @@
    CarreiraMais — Vagas (Public)
    =========================== */
 
+function matchVagasForUser(user) {
+  const userArea   = user.area || '';
+  const userSkills = (user.skills || []).map(s => s.toLowerCase());
+
+  return VAGAS
+    .map(v => {
+      let score = 0;
+      if (v.area === userArea) score += 10;
+      const vagaSkills = v.skills.map(s => s.toLowerCase());
+      score += userSkills.filter(s => vagaSkills.includes(s)).length * 2;
+      return { ...v, _score: score };
+    })
+    .filter(v => v._score > 0)
+    .sort((a, b) => b._score - a._score);
+}
+
 function pageVagas() {
+  const user = getUser();
   const areasOptions = [...new Set(VAGAS.map(v=>v.area))].sort().map(a=>`<option value="${a}">${a}</option>`).join('');
   const cards = VAGAS.map(renderPublicJobCard).join('');
+
+  let topSection;
+  if (user) {
+    const matched = matchVagasForUser(user);
+    const matchedCards = matched.slice(0, 3).map(renderPublicJobCard).join('');
+    topSection = `
+  <div class="container" style="margin-top:32px">
+    <div class="section-header" style="margin-bottom:16px">
+      <h2 style="font-size:1.25rem;display:flex;align-items:center;gap:8px">
+        <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--secondary)"></i>
+        Recomendadas para você
+      </h2>
+      <p style="color:var(--text-muted);margin-top:4px">
+        Baseado na sua área <strong>${user.area || '—'}</strong> e ${(user.skills||[]).length} habilidade(s) do seu perfil.
+      </p>
+    </div>
+    <div class="grid-cards">
+      ${matched.length
+        ? matchedCards
+        : '<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-wand-magic-sparkles"></i><h3>Nenhuma correspondência exata</h3><p>Complete seu perfil com área e habilidades para receber recomendações.</p><button class="btn btn-primary" onclick="window.location.hash=\'dashboard\'">Editar perfil</button></div>'}
+    </div>
+    <hr style="border-color:var(--border);margin:32px 0">
+  </div>`;
+  } else {
+    topSection = `
+  <div class="container">
+    <div class="jobs-cta-banner" style="margin-top:32px">
+      <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Receba vagas compatíveis com o seu perfil</h3>
+      <p>Crie sua conta e nosso sistema encontrará automaticamente as vagas mais alinhadas com suas habilidades e área de interesse.</p>
+      <button class="btn btn-white btn-lg" onclick="window.location.hash='cadastro'">
+        <i class="fa-solid fa-user-plus"></i> Criar perfil grátis
+      </button>
+    </div>
+  </div>`;
+  }
 
   return `
   <!-- Page Hero -->
@@ -15,16 +67,7 @@ function pageVagas() {
     </div>
   </div>
 
-  <!-- CTA Banner -->
-  <div class="container">
-    <div class="jobs-cta-banner" style="margin-top:32px">
-      <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Receba vagas compatíveis com o seu perfil</h3>
-      <p>Crie sua conta e nosso sistema encontrará automaticamente as vagas mais alinhadas com suas habilidades e área de interesse.</p>
-      <button class="btn btn-white btn-lg" onclick="window.location.hash='cadastro'">
-        <i class="fa-solid fa-user-plus"></i> Criar perfil grátis
-      </button>
-    </div>
-  </div>
+  ${topSection}
 
   <!-- Filters -->
   <div class="filters-toolbar">

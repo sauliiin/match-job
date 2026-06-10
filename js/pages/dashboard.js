@@ -51,7 +51,7 @@ function pageDashboard() {
       <div class="dashboard-tab active" id="tab-perfil">${renderProfileTab(user)}</div>
       <div class="dashboard-tab" id="tab-cursos-rec">${renderCoursesRec(user)}</div>
       <div class="dashboard-tab" id="tab-vagas-rec">${renderJobsRec(user)}</div>
-      <div class="dashboard-tab" id="tab-buscar">${renderSearchTab()}</div>
+      <div class="dashboard-tab" id="tab-buscar">${renderSearchTab(user)}</div>
     </main>
   </div>
 
@@ -632,7 +632,8 @@ function renderJobCard(match) {
 }
 
 // ---- Search Tab ----
-function renderSearchTab() {
+function renderSearchTab(user) {
+  const initialMatches = getRankedJobMatches(user);
   return `
   <div style="margin-bottom:24px">
     <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:6px">Buscar Oportunidades</h1>
@@ -662,8 +663,8 @@ function renderSearchTab() {
     </select>
   </div>
 
-  <div style="font-size:.875rem;color:var(--text-muted);margin-bottom:16px" id="search-count">${VAGAS.length} vagas encontradas</div>
-  <div class="grid-cards" id="search-grid">${VAGAS.map(renderJobCard).join('')}</div>
+  <div style="font-size:.875rem;color:var(--text-muted);margin-bottom:16px" id="search-count">${initialMatches.length} vagas encontradas</div>
+  <div class="grid-cards" id="search-grid">${initialMatches.map(renderJobCard).join('')}</div>
   `;
 }
 
